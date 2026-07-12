@@ -1,0 +1,63 @@
+# Release signing workflow — builds the wheel, then runs `agentos sign --bundle`
+# + `agentos verify --trust-root` to produce and check the signed attestation
+# bundle. Publishing (the GitHub release upload + digest-pin print) is the
+# maintainer's release.sh; this workflow is the CI-side mirror of its
+# build → sign → verify spine.
+
+name: sign-and-publish
+
+# Manual / release-gated. Before this runs GREEN the runner MUST provision the
+# following (this provisioning is the remaining hardening — keep the trigger
+# manual until it lands):
+#   - the supply-chain toolchain on PATH: cosign, syft, grype, pip-licenses
+#     (e.g. sigstore/cosign-installer + the anchore syft/grype installers +
+#     `uv tool install pip-licenses`). `agentos sign --bundle` shells out to all
+#     four and fail-loud-refuses if any is missing.
+#   - the signing key: write the cosign private key from a GitHub Actions secret
+#     to a file, point COGNIC_SIGNING_KEY_PATH at it, and set COSIGN_PASSWORD
+#     from a secret. The committed cosign.pub is the verify trust root — this
+#     pack signs with a maintainer-held key, NOT a keyless/OIDC flow.
+on:
+  workflow_dispatch:
+
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      # The dev extra git-pins the AgentOS authoring CLI (exact anchor in pyproject.toml) (validate/sign/verify).
+      - name: Sync dev dependencies (installs the pyproject-pinned authoring CLI)
+        run: uv sync --extra dev
+
+      # sign discovers the wheel (its --bundle-root defaults to the wheel's
+      # parent directory), so the wheel must exist before signing.
+      - name: Build the wheel
+        run: uv build --wheel
+
+      # Operator provisioning (deferred — see header). Example wiring:
+      #   - name: Provision the cosign signing key from a secret
+      #     run: |
+      #       printf '%s' "${{ secrets.COSIGN_PRIVATE_KEY }}" > "$RUNNER_TEMP/cosign.key"
+      #       echo "COGNIC_SIGNING_KEY_PATH=$RUNNER_TEMP/cosign.key" >> "$GITHUB_ENV"
+      - name: Sign the bundle (cosign + SBOM + SLSA + in-toto + vuln + license)
+        env:
+          # COGNIC_SIGNING_KEY_PATH is set by the provisioning step above at
+          # release time; COSIGN_PASSWORD is the matching operator secret.
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        run: uv run agentos sign --bundle .
+
+      # Verify against the committed public trust root — explicit, never the
+      # implicit Settings.signing_trust_root_path default.
+      - name: Verify the signed bundle (explicit trust root)
+        run: uv run agentos verify --trust-root cosign.pub .
+
+      # Publishing (the `gh release create` upload + the PROBE_*_SHA256 digest
+      # pin print consumed by the AgentOS proof's stage-packs.sh) is the
+      # maintainer-run release.sh at the repo root.

@@ -1,0 +1,59 @@
+[pack]
+pack_id = "cognic-tool-approval-probe"
+schema_version = 1
+kind = "tool"
+
+[identity]
+agent_id = "did:web:github.com:bmzee:cognic-tool-approval-probe"
+display_name = "Cognic Approval Probe"
+provider_organization = "Cognic"
+provider_url = "https://github.com/bmzee/cognic-tool-approval-probe"
+
+[mcp]
+caching = false
+elicitation_form = false
+
+[data_governance]
+# Honest declaration for a business-side-effect-free probe: the pack handles
+# the caller-supplied per-call nonce (internal proof telemetry) and produces
+# the proof-local invocation ledger (an audit trail of tool executions).
+# No customer / payment / regulator data ever enters this pack.
+data_classes = [
+    "internal",
+    "audit_trail",
+]
+# The ledger exists solely as execution evidence for the ADR-014 four-eyes
+# approval proof — audit evidence, not telemetry and not a business record.
+purpose = "audit_evidence"
+# The ledger IS retained (that is its whole point), but only for the proof
+# window; the proof environment (and its volume) is torn down afterwards.
+# retention_max_window is required whenever retention_policy != "none";
+# Wave-1 validates it as a positive number (days).
+retention_policy = "purpose_window"
+retention_max_window = 7
+egress_allow_list = []
+
+[risk_tier]
+# THE load-bearing declaration: high_risk_custom routes every probe_write
+# invocation through the ADR-014 four-eyes approval flow (tools.rego maps
+# high_risk_custom -> require_4_eyes; grant scope tool.approve.high_risk_custom).
+tier = "high_risk_custom"
+
+[supply_chain]
+attestation_paths = [
+    "attestations/cosign.sig",
+    "attestations/sbom.cdx.json",
+]
+blob_path = "cognic_tool_approval_probe-0.1.0-py3-none-any.whl"
+
+[tool.cognic.mcp]
+transport = "streamable-http"
+auth = "oauth-prm"
+server_url = "http://127.0.0.1:8766/mcp"
+scopes = [
+    "approval_probe.write",
+]
+resources_supported = false
+prompts_supported = false
+sampling_supported = false
+conformance_version = "1.0"

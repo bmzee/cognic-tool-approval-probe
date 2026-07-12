@@ -1,0 +1,66 @@
+[project]
+name = "cognic-tool-approval-probe"
+version = "0.1.0"
+description = "High-risk approval-flow probe MCP tool (Cognic AgentOS pack): business-side-effect-free probe_write over a proof-local invocation ledger."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Cognic", email = "zaighum@msn.com" },
+]
+
+dependencies = [
+    "mcp==1.27.0",
+    "uvicorn[standard]>=0.35",
+    "PyJWT[crypto]>=2.10,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=1",
+    "ruff>=0.9",
+    "mypy>=1.14",
+    # AgentOS authoring/governance CLI — author/CI-time only (validate/sign/verify).
+    # Pinned to the M8.5-B main anchor (PR #128 squash); the pack has NO kernel
+    # runtime dependency.
+    "cognic-agentos @ git+https://github.com/bmzee/cognic-agentos@c7150590",
+]
+
+[project.entry-points."cognic.tools"]
+approval_probe = "cognic_tool_approval_probe:SERVER_DESCRIPTOR"
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+# The kernel dev dep is a git direct reference; hatchling requires this opt-in.
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cognic_tool_approval_probe"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"cognic-pack-manifest.toml" = "cognic_tool_approval_probe/cognic-pack-manifest.toml"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# Mirrors the sibling cognic-tool-oracle-schema pack's rule set (pyflakes + a
+# safe pycodestyle subset) so the two proof packs lint identically.
+select = ["E4", "E7", "E9", "F"]
+
+[tool.mypy]
+python_version = "3.12"
+# Unlike the sibling oracle pack (which documents strictness as a follow-up on
+# an older tree), this repo is born strict-clean — matching the kernel's
+# `strict = true` posture from the first commit.
+strict = true
