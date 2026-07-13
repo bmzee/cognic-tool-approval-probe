@@ -141,7 +141,8 @@ verifier (issuer / signature / expiry / audience / required scope).
 ## Testing
 
 ```sh
-uv sync --extra dev
+uv lock --check
+uv sync --frozen --extra dev
 uv run pytest tests/ -q
 ```
 
@@ -156,9 +157,17 @@ The `dev` extra carries the AgentOS authoring CLI (git-pinned in
 `pyproject.toml`):
 
 ```sh
-uv sync --extra dev
+uv lock --check
+uv sync --frozen --extra dev
 agentos validate .            # build-time manifest-shape check
 ```
+
+`uv.lock` is committed supply-chain evidence, not local cache. It is the
+single resolved dependency inventory consumed by `agentos sign`: the signer
+derives the CycloneDX SBOM, vulnerability scan, and normalized license audit
+from its current-platform runtime graph. CI and `release.sh` both run
+`uv lock --check` followed by a frozen sync, so a published release cannot
+silently resolve a different dependency set from the reviewed tree.
 
 `agentos validate` requires each declared `[supply_chain].attestation_paths`
 file to exist, so it fails standalone until the real bundle is produced —

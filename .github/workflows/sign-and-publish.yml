@@ -33,8 +33,10 @@ jobs:
           enable-cache: true
 
       # The dev extra git-pins the AgentOS authoring CLI (exact anchor in pyproject.toml) (validate/sign/verify).
-      - name: Sync dev dependencies (installs the pyproject-pinned authoring CLI)
-        run: uv sync --extra dev
+      - name: Check lock + sync dev dependencies (frozen authoring environment)
+        run: |
+          uv lock --check
+          uv sync --frozen --extra dev
 
       # sign discovers the wheel (its --bundle-root defaults to the wheel's
       # parent directory), so the wheel must exist before signing.

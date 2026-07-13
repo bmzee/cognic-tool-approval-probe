@@ -22,6 +22,8 @@
 #                            once with `cosign generate-key-pair`; commit ONLY
 #                            cosign.pub. This script refuses to run without it —
 #                            a release verified against nothing is not a release.
+#   uv.lock                  the committed dependency inventory consumed by
+#                            agentos sign. Release resolution is always frozen.
 
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -74,10 +76,15 @@ done
   echo "       cosign.pub, and keep the private key out of the repo." >&2
   exit 1
 }
+[ -f uv.lock ] || {
+  echo "FATAL: committed uv.lock dependency inventory is missing" >&2
+  exit 1
+}
 
 # ---------- 1. build the wheel (sign discovers it under the pack root) ----------
 rm -rf dist
-uv sync --extra dev
+uv lock --check
+uv sync --frozen --extra dev
 uv build --wheel
 [ -f "$WHEEL" ] || {
   echo "FATAL: expected wheel not produced: $WHEEL" >&2
