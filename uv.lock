@@ -158,7 +158,7 @@ wheels = [
 [[package]]
 name = "cognic-agentos"
 version = "0.0.1"
-source = { git = "https://github.com/bmzee/cognic-agentos?rev=d9d7c3056a165e051fb3956215fad9df1df1c57c#d9d7c3056a165e051fb3956215fad9df1df1c57c" }
+source = { git = "https://github.com/bmzee/cognic-agentos?rev=756b9abd02c59e8f1e0164bec975da0de166e70d#756b9abd02c59e8f1e0164bec975da0de166e70d" }
 dependencies = [
     { name = "alembic" },
     { name = "fastapi" },
@@ -206,7 +206,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cognic-agentos", marker = "extra == 'dev'", git = "https://github.com/bmzee/cognic-agentos?rev=d9d7c3056a165e051fb3956215fad9df1df1c57c" },
+    { name = "cognic-agentos", marker = "extra == 'dev'", git = "https://github.com/bmzee/cognic-agentos?rev=756b9abd02c59e8f1e0164bec975da0de166e70d" },
     { name = "mcp", specifier = "==1.27.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.14" },
     { name = "pyjwt", extras = ["crypto"], specifier = ">=2.10,<3" },

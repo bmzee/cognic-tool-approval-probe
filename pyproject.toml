@@ -22,9 +22,9 @@ dev = [
     "ruff>=0.9",
     "mypy>=1.14",
     # AgentOS authoring/governance CLI — author/CI-time only (validate/sign/verify).
-    # Pinned to the ADR-016 encrypted-key custody fix (PR #130 squash); the
-    # pack has NO kernel runtime dependency.
-    "cognic-agentos @ git+https://github.com/bmzee/cognic-agentos@d9d7c3056a165e051fb3956215fad9df1df1c57c",
+    # Pinned to the complete ADR-016 pre-release remediation (PR #131 squash);
+    # the pack has NO kernel runtime dependency.
+    "cognic-agentos @ git+https://github.com/bmzee/cognic-agentos@756b9abd02c59e8f1e0164bec975da0de166e70d",
 ]
 
 [project.entry-points."cognic.tools"]
