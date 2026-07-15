@@ -1,4 +1,4 @@
-"""Pack-manifest contract tests — the high-risk four-eyes probe (v0.1.0)."""
+"""Pack-manifest contracts for the v0.2.0 action-class approval probe."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from typing import Any
 
 _ROOT = pathlib.Path(__file__).resolve().parents[1]
 
-_WHEEL_NAME = "cognic_tool_approval_probe-0.1.0-py3-none-any.whl"
+_WHEEL_NAME = "cognic_tool_approval_probe-0.2.0-py3-none-any.whl"
 
 
 def _manifest() -> dict[str, Any]:
@@ -19,8 +19,8 @@ def _pyproject() -> dict[str, Any]:
     return tomllib.loads((_ROOT / "pyproject.toml").read_text())
 
 
-def test_version_is_0_1_0() -> None:
-    assert _pyproject()["project"]["version"] == "0.1.0"
+def test_version_is_0_2_0() -> None:
+    assert _pyproject()["project"]["version"] == "0.2.0"
 
 
 def test_pack_block_identity() -> None:

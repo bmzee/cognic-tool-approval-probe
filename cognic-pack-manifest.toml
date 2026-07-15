@@ -44,7 +44,7 @@ attestation_paths = [
     "attestations/cosign.sig",
     "attestations/sbom.cdx.json",
 ]
-blob_path = "cognic_tool_approval_probe-0.1.0-py3-none-any.whl"
+blob_path = "cognic_tool_approval_probe-0.2.0-py3-none-any.whl"
 
 [tool.cognic.mcp]
 transport = "streamable-http"

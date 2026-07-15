@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# release.sh — the maintainer's one-shot v0.1.0 release path for
+# release.sh — the maintainer's one-shot v0.2.0 release path for
 # cognic-tool-approval-probe. Mirrors .github/workflows/sign-and-publish.yml's
 # build → sign → verify spine, then publishes the GitHub release and prints
 # the digest pins the AgentOS proof's stage-packs.sh locks.
@@ -28,7 +28,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-VERSION="0.1.0"
+VERSION="0.2.0"
 TAG="v${VERSION}"
 WHEEL="dist/cognic_tool_approval_probe-${VERSION}-py3-none-any.whl"
 
@@ -113,7 +113,7 @@ gh release create "$TAG" \
   "${ATTESTATIONS[@]}" \
   cosign.pub \
   --title "cognic-tool-approval-probe ${TAG}" \
-  --notes "High-risk (risk_tier=high_risk_custom, ADR-014 four-eyes) approval-probe MCP tool pack for the AgentOS M8.5-C live proof. Business-side-effect-free: probe_write appends one nonce line to the proof-local invocation ledger — proof instrumentation, not a business write. Signed bundle: cosign + SBOM + SLSA + in-toto + vuln + license; verify with \`agentos verify --trust-root cosign.pub .\`."
+  --notes "High-risk (risk_tier=high_risk_custom, ADR-014 four-eyes) action-class approval-probe MCP tool pack for AgentOS M8.5-D S1. Business-side-effect-free: probe_write appends one nonce line to the proof-local invocation ledger — proof instrumentation, not a business write. Signed bundle: cosign + SBOM + SLSA + in-toto + vuln + license; verify with \`agentos verify --trust-root cosign.pub .\`."
 
 # ---------- 5. print the digest pins for the AgentOS proof ----------
 echo

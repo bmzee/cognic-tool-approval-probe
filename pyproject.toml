@@ -1,6 +1,6 @@
 [project]
 name = "cognic-tool-approval-probe"
-version = "0.1.0"
+version = "0.2.0"
 description = "High-risk approval-flow probe MCP tool (Cognic AgentOS pack): business-side-effect-free probe_write over a proof-local invocation ledger."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
