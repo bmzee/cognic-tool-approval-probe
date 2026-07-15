@@ -26,11 +26,36 @@
 #                            agentos sign. Release resolution is always frozen.
 
 set -euo pipefail
-cd "$(dirname "$0")"
+
+# Capture and unexport secrets before the first external process. The key
+# password is exposed only to the signing CLI; the GitHub token only to gh.
+_COSIGN_PASSWORD_LOCAL="${COSIGN_PASSWORD:-}"
+_GH_TOKEN_LOCAL="${GH_TOKEN:-}"
+unset COSIGN_PASSWORD GH_TOKEN
+
+_SCRIPT_PATH="${BASH_SOURCE[0]}"
+_SCRIPT_DIR="${_SCRIPT_PATH%/*}"
+[ "$_SCRIPT_DIR" != "$_SCRIPT_PATH" ] || _SCRIPT_DIR="."
+cd "$_SCRIPT_DIR"
+unset _SCRIPT_PATH _SCRIPT_DIR
 
 VERSION="0.2.0"
 TAG="v${VERSION}"
 WHEEL="dist/cognic_tool_approval_probe-${VERSION}-py3-none-any.whl"
+RELEASE_TARGET_SHA="${RELEASE_TARGET_SHA:-$(git rev-parse HEAD)}"
+
+[[ "$RELEASE_TARGET_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+  echo "FATAL: RELEASE_TARGET_SHA must be a full lowercase git SHA" >&2
+  exit 1
+}
+[ "$(git rev-parse HEAD)" = "$RELEASE_TARGET_SHA" ] || {
+  echo "FATAL: release target does not match the checked-out revision" >&2
+  exit 1
+}
+[ -z "$(git status --porcelain --untracked-files=all)" ] || {
+  echo "FATAL: release worktree must be clean before build/sign/publish" >&2
+  exit 1
+}
 
 # The 7 attestations `agentos sign --bundle` produces; all uploaded to the release.
 ATTESTATIONS=(
@@ -66,7 +91,7 @@ done
   echo "FATAL: COGNIC_SIGNING_KEY_PATH does not point at a file" >&2
   exit 1
 }
-[ -n "${COSIGN_PASSWORD:-}" ] || {
+[ -n "$_COSIGN_PASSWORD_LOCAL" ] || {
   echo "FATAL: COSIGN_PASSWORD is unset" >&2
   exit 1
 }
@@ -94,7 +119,8 @@ uv build --wheel
 # ---------- 2. sign the full bundle ----------
 # cosign sign-blob + syft SBOM + grype vuln scan + pip-licenses audit +
 # SLSA provenance + in-toto layout + the 7-attestation persister.
-uv run agentos sign --bundle .
+COSIGN_PASSWORD="$_COSIGN_PASSWORD_LOCAL" uv run agentos sign --bundle .
+unset _COSIGN_PASSWORD_LOCAL
 
 # ---------- 3. verify offline against the committed public trust root ----------
 # Explicit --trust-root, never the implicit Settings default.
@@ -108,12 +134,22 @@ for artefact in "${ATTESTATIONS[@]}"; do
 done
 
 # ---------- 4. publish: wheel + the 7 attestations + cosign.pub ----------
-gh release create "$TAG" \
-  "$WHEEL" \
-  "${ATTESTATIONS[@]}" \
-  cosign.pub \
-  --title "cognic-tool-approval-probe ${TAG}" \
-  --notes "High-risk (risk_tier=high_risk_custom, ADR-014 four-eyes) action-class approval-probe MCP tool pack for AgentOS M8.5-D S1. Business-side-effect-free: probe_write appends one nonce line to the proof-local invocation ledger — proof instrumentation, not a business write. Signed bundle: cosign + SBOM + SLSA + in-toto + vuln + license; verify with \`agentos verify --trust-root cosign.pub .\`."
+_publish_release() {
+  gh release create "$TAG" \
+    "$WHEEL" \
+    "${ATTESTATIONS[@]}" \
+    cosign.pub \
+    --target "$RELEASE_TARGET_SHA" \
+    --title "cognic-tool-approval-probe ${TAG}" \
+    --notes "High-risk (risk_tier=high_risk_custom, ADR-014 four-eyes) action-class approval-probe MCP tool pack for AgentOS M8.5-D S1. Business-side-effect-free: probe_write appends one nonce line to the proof-local invocation ledger — proof instrumentation, not a business write. Signed bundle: cosign + SBOM + SLSA + in-toto + vuln + license; verify with \`agentos verify --trust-root cosign.pub .\`."
+}
+
+if [ -n "$_GH_TOKEN_LOCAL" ]; then
+  GH_TOKEN="$_GH_TOKEN_LOCAL" _publish_release
+else
+  _publish_release
+fi
+unset _GH_TOKEN_LOCAL
 
 # ---------- 5. print the digest pins for the AgentOS proof ----------
 echo

@@ -175,10 +175,15 @@ the CI `authoring-validate` lane seeds throwaway placeholders on the runner
 (never committed). The real bundle (`agentos sign --bundle .`, which shells
 out to cosign / syft / grype / pip-licenses) plus
 `agentos verify --trust-root cosign.pub .` and the GitHub release upload are
-wrapped by **`release.sh`** — the maintainer's one-shot release path. It
-requires the maintainer-held cosign private key (`COGNIC_SIGNING_KEY_PATH` +
-`COSIGN_PASSWORD`; the key never enters the repo) and the committed public
-trust root `cosign.pub` (generate the pair with `cosign generate-key-pair`;
-commit **only** `cosign.pub`). On success it prints the sha256 digest pins
+wrapped by **`release.sh`**. The dispatch-only `sign-and-publish` workflow is
+the protected remote entry: its first job validates the requested version and
+absence of a prior tag/release, then the `release` environment holds execution
+for maintainer approval. Only that protected job can read
+`COSIGN_PRIVATE_KEY` and `COSIGN_PASSWORD`; it installs checksum-pinned
+signing tools, proves the private key derives the committed `cosign.pub`, and
+invokes `release.sh` with the exact workflow SHA as the release target. The
+same script remains usable locally with `COGNIC_SIGNING_KEY_PATH` and
+`COSIGN_PASSWORD`; the key never enters the repo and secret values are never
+echoed. On success it prints the sha256 digest pins
 (`PROBE_WHEEL_SHA256` / `PROBE_PUB_SHA256`) that get locked into the AgentOS
 proof's `stage-packs.sh`.
