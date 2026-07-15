@@ -116,3 +116,11 @@ def test_wheel_force_includes_the_manifest() -> None:
         force_include["cognic-pack-manifest.toml"]
         == "cognic_tool_approval_probe/cognic-pack-manifest.toml"
     )
+
+
+def test_probe_write_declares_the_action_capability_class() -> None:
+    """The write probe requires an entitlement and the approval gate."""
+    tools = _manifest()["tool"]["cognic"]["tools"]
+    assert [(tool["name"], tool["capability_class"]) for tool in tools] == [
+        ("probe_write", "action")
+    ]

@@ -57,3 +57,11 @@ resources_supported = false
 prompts_supported = false
 sampling_supported = false
 conformance_version = "1.0"
+
+# Per-tool governance declaration (M8.5-D S1). probe_write performs a WRITE —
+# `action` class is what makes the kernel require an action entitlement for the
+# requesting human AND route the call through the ADR-014 approval gate. The
+# pack tier (high_risk_custom) then determines HOW MANY humans must approve.
+[[tool.cognic.tools]]
+name = "probe_write"
+capability_class = "action"
