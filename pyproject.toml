@@ -21,6 +21,10 @@ dev = [
     "pytest-asyncio>=1",
     "ruff>=0.9",
     "mypy>=1.14",
+    # `agentos sign` shells out to the pip-licenses binary for the ADR-016
+    # license-audit attestation; the release job provisions it solely via
+    # `uv sync --frozen --extra dev`.
+    "pip-licenses>=5",
     # AgentOS authoring/governance CLI — author/CI-time only (validate/sign/verify).
     # Pinned to the complete ADR-016 pre-release remediation (PR #131 squash);
     # the pack has NO kernel runtime dependency.
